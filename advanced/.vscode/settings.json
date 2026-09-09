@@ -1,0 +1,9 @@
+{
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "[python]": {
+    "defaultInterpreterPath": "/opt/homebrew/bin/python3"
+  },
+  "python.analysis.typeCheckingMode": "strict",
+  "pylance.typeCheckingMode": "strict"
+}

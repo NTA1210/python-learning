@@ -18,8 +18,9 @@ SYSTEM_PROMPT = (
 
 class SummaryService:
 
-    def __init__(self, ai_client: OpenAIClient):
-        self.ai_client = ai_client
+    def __init__(self):
+        self.ai_client = OpenAIClient()
+        self.db = SessionLocal()
 
     def _build_prompt(self, text: str):
         return [
@@ -28,7 +29,6 @@ class SummaryService:
         ]
 
     def summarize(self, file: FileStorage) -> Summary:
-        db = SessionLocal()
         content = file.read().decode('utf-8', errors="ignore")
         print("TOTAL WORDS: ",len(content))
         filename = file.filename
@@ -37,29 +37,25 @@ class SummaryService:
         try:
             chunks = chunk_text(content)
             summary_text = ""
-            if len(chunks) == 1:
 
-                summary_text = self._summarize_once(content)
-                    
-            else:
+            while len(chunks) != 1:
                 summaries = []
-                combined_summary = ""
                 for chunk in chunks:
                     summaries.append(self._summarize_once(chunk))
-                combined_summary = "\n".join(summaries)
-                summary_text = self._summarize_once(combined_summary)   
+                content = "\n".join(summaries)
+                chunks = chunk_text(content) 
+
+            summary_text = self._summarize_once(content) 
 
             # write file    
             write_file(summary_filename, summary_text)
 
-            summary = SummaryRepository(db).summarize(summary_filename)
-            db.commit()
-            db.refresh(summary)
+            summary = SummaryRepository(self.db).summarize(summary_filename)
             print('SUMMARY',summary.to_dict())
             print("FINAL TOTAL WORDS: ",len(summary_text))
             return summary
         finally:
-            db.close()
+            self.db.close()
 
     def _summarize_once(self, text: str):
         messages = self._build_prompt(text)

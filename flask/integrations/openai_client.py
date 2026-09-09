@@ -14,6 +14,6 @@ class OpenAIClient:
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=temperature
+            temperature=temperature,
         )
         return response
